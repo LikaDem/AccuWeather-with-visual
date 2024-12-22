@@ -7,7 +7,7 @@ import plotly.express as px
 app = Dash(__name__)  # Экземпляр приложения
 translator = Translator()
 
-API_KEY = 'f2xzWIvhaSahTB3vENImWBeqJCTff1Qh'
+API_KEY = '76whizPHXN1HYfY9AuPTV78kVyk47Gsd'
 BASE_URL = "https://dataservice.accuweather.com"
 
 # Получение данных о погоде
@@ -72,14 +72,14 @@ def create_map(cities_data):
             "precipitation": precipitation,
         })
 
+        hover_texts.append(f"{city}: Температура {temperature}°C, Ветер {wind_speed} км/ч, Вероятность осадков: {precipitation}%")
+
         if i < len(cities_data) - 1:
             next_city = cities_data[i + 1]
             route_lines.append([locations[-1], {
                 "lat": next_city["weather"]["GeoPosition"]["Latitude"],
                 "lon": next_city["weather"]["GeoPosition"]["Longitude"]
             }])
-
-            hover_texts.append(f"{city}: Температура {temperature}°C, Ветер {wind_speed} км/ч, Вероятность осадков: {precipitation}%")
 
     # Построение карты
     fig = px.scatter_mapbox(
@@ -99,23 +99,24 @@ def create_map(cities_data):
 
     # Добавляем линии маршрута с текстом при наведении
     for i, route in enumerate(route_lines):
+        route_name = f"Маршрут {i + 1}"
         fig.add_trace(go.Scattermapbox(
             mode="lines",
             lon=[point["lon"] for point in route],
             lat=[point["lat"] for point in route],
             line={"width": 2, "color": route_colors[i % len(route_colors)]},  # Цвет в зависимости от маршрута
             hoverinfo="text",  # Добавление текста при наведении
-            text=hover_texts[i]  # Сообщение для линии
+            text=hover_texts[i],  # Сообщение для линии
+            name=route_name
         ))
 
     # Убираем изменения в легенде, оставляем стандартное отображение
     fig.update_layout(
         title="Маршрут с прогнозами погоды",
         showlegend=True,
+        legend_title="Маршруты",
+        mapbox_style="open-street-map"
     )
-
-    # Легенда будет по умолчанию: trace 1, trace 2 и т.д.
-    fig.update_layout(mapbox_style="open-street-map")
     return fig
 
 # Макет приложения
