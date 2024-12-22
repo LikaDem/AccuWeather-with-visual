@@ -7,7 +7,7 @@ import plotly.express as px
 app = Dash(__name__)  # Экземпляр приложения
 translator = Translator()
 
-API_KEY = '76whizPHXN1HYfY9AuPTV78kVyk47Gsd'
+API_KEY = 'jLBKxojVvNdgdgci2uxmbTRymuCIn5V3'
 BASE_URL = "https://dataservice.accuweather.com"
 
 # Получение данных о погоде
@@ -44,7 +44,6 @@ def get_weather_forecast(city_name, days):
     except Exception as e:
         return {"error": "Произошла непредвиденная ошибка. Попробуйте позже."}
 
-# Функция для создания карты с базовой легендой
 def create_map(cities_data):
     locations = []
     route_lines = []
@@ -72,6 +71,7 @@ def create_map(cities_data):
             "precipitation": precipitation,
         })
 
+        # Формируем текст, который будет показываться при наведении на маркеры
         hover_texts.append(f"{city}: Температура {temperature}°C, Ветер {wind_speed} км/ч, Вероятность осадков: {precipitation}%")
 
         if i < len(cities_data) - 1:
@@ -99,6 +99,22 @@ def create_map(cities_data):
 
     # Добавляем линии маршрута с текстом при наведении
     for i, route in enumerate(route_lines):
+        # Получаем информацию о городах и их погоде для подписи
+        city1 = cities_data[i]["city"]
+        city2 = cities_data[i + 1]["city"]
+        weather1 = cities_data[i]["weather"]["DailyForecasts"][0]
+        weather2 = cities_data[i + 1]["weather"]["DailyForecasts"][0]
+        temp1 = weather1["Temperature"]["Maximum"].get("Value", 0)
+        temp2 = weather2["Temperature"]["Maximum"].get("Value", 0)
+        wind1 = weather1.get("Day", {}).get("Wind", {}).get("Speed", {}).get("Value", 0)
+        wind2 = weather2.get("Day", {}).get("Wind", {}).get("Speed", {}).get("Value", 0)
+        precip1 = weather1["Day"].get("PrecipitationProbability", {}).get("Value", 0)
+        precip2 = weather2["Day"].get("PrecipitationProbability", {}).get("Value", 0)
+
+        # Формируем текст для линии маршрута
+        route_text = f"{city1} -> {city2}. \nПогода {city1}: Температура {temp1}°C, Ветер {wind1} км/ч, Вероятность осадков {precip1}%. \nПогода {city2}: Температура {temp2}°C, Ветер {wind2} км/ч, Вероятность осадков {precip2}%."
+        
+        # Добавляем маршрут с подписью
         route_name = f"Маршрут {i + 1}"
         fig.add_trace(go.Scattermapbox(
             mode="lines",
@@ -106,7 +122,7 @@ def create_map(cities_data):
             lat=[point["lat"] for point in route],
             line={"width": 2, "color": route_colors[i % len(route_colors)]},  # Цвет в зависимости от маршрута
             hoverinfo="text",  # Добавление текста при наведении
-            text=hover_texts[i],  # Сообщение для линии
+            text=route_text,  # Сообщение для линии
             name=route_name
         ))
 
@@ -117,7 +133,9 @@ def create_map(cities_data):
         legend_title="Маршруты",
         mapbox_style="open-street-map"
     )
+    
     return fig
+
 
 # Макет приложения
 app.layout = html.Div([ 
